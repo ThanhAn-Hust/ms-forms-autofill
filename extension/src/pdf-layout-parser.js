@@ -6,19 +6,24 @@
   const FILLED_GLYPH_RE = /^[●◉☑✓✔■]\s*/u;
   const EMPTY_GLYPH_RE = /^[○◯☐□]\s*/u;
   const QUESTION_START_RE = /^\s*(\d+)\s*[\.\)]\s+(.+)$/u;
-  const STANDALONE_NUMBER_RE = /^\s*(\d+)\s*[\.\)]\s*$/u;
+  const STANDALONE_BADGE_RE = /^\s*(\d+)\s*[\.\)]?\s*$/u;
+  const POINTS_BADGE_RE = /\(\s*\d+(?:[.,]\d+)?\s*(?:điểm|point|points|pt|pts)\s*\)/iu;
 
   const BOILERPLATE_PATTERNS = [
-    /^microsoft forms$/iu,
+    /^microsoft\s*(?:forms|365)\b/iu,
     /^never give out your password/iu,
     /^report abuse/iu,
     /^this content is created by the owner of the form/iu,
+    /privacy or security practices of its customers/iu,
+    /^privacy and cookies\b/iu,
+    /create my own form/iu,
     /^powered by microsoft forms/iu,
     /^không bao giờ tiết lộ mật khẩu/iu,
     /^nội dung này không được tạo hoặc xác nhận bởi microsoft/iu,
     /^báo cáo lạm dụng/iu,
     /^save my response$/iu,
     /^print response$/iu,
+    /^hi,\s+[^.]+\.\s+when you submit this form/iu,
   ];
 
   const PLACEHOLDER_ANSWERS = new Set([
@@ -150,7 +155,7 @@
     const groups = [];
     for (const item of valid) {
       const last = groups[groups.length - 1];
-      if (last && Math.abs(item.y - last.anchorY) <= 5) {
+      if (last && Math.abs(item.y - last.anchorY) <= 6.5) {
         last.items.push(item);
       } else {
         groups.push({ anchorY: item.y, items: [item] });
@@ -206,13 +211,21 @@
       if (re.test(t)) return true;
     }
 
+    if (line.y < 45 && /^\d{1,2}:\d{2}$/.test(t)) {
+      return true;
+    }
+
     const inMargin = line.y < 28 || line.y > pageHeight - 28;
     if (!inMargin) return false;
 
     if (/https?:\/\/\S+/i.test(t)) return true;
     if (/^\d+\s*\/\s*\d+$/.test(t)) return true;
     if (/^(?:page|trang)\s+\d+(?:\s*(?:of|\/)\s*\d+)?$/i.test(t)) return true;
-    if (/^\d{1,4}[\/\-]\d{1,2}[\/\-]\d{1,4}(?:[,\s]+\d{1,2}:\d{2}(?:\s*[AP]M)?)?/i.test(t)) {
+    if (
+      /^(?:\d{1,2}:\d{2}(?:\s*[AP]M)?\s+)?\d{1,4}[\/\-]\d{1,2}[\/\-]\d{1,4}(?:[,\s]+\d{1,2}:\d{2}(?:\s*[AP]M)?)?/i.test(
+        t
+      )
+    ) {
       return true;
     }
 
@@ -292,12 +305,19 @@
         };
 
         const glyph = detectGlyphControl(line.text);
-        const canvasControl = analyzeOptionControlRegion(
-          page.rgbaData,
-          Number(page.imgWidth) || 0,
-          Number(page.imgHeight) || 0,
-          searchBox
-        );
+        const isPurePointsLine =
+          /^\s*[?:*\s]*\(\s*\d+(?:[.,]\d+)?\s*(?:điểm|point|points|pt|pts)\s*\)[?:*\s]*$/iu.test(
+            line.text
+          );
+        const canvasControl =
+          glyph.hasControl || isPurePointsLine
+            ? { hasControl: false, isFilled: false, centerInkRatio: 0, box: null }
+            : analyzeOptionControlRegion(
+                page.rgbaData,
+                Number(page.imgWidth) || 0,
+                Number(page.imgHeight) || 0,
+                searchBox
+              );
 
         const hasControl = glyph.hasControl || canvasControl.hasControl;
         const isFilled = glyph.hasControl
@@ -311,31 +331,79 @@
           hasControl,
           isFilled,
           centerInkRatio: canvasControl.centerInkRatio,
+          controlBox: canvasControl.box,
+          fromGlyph: glyph.hasControl,
         });
       }
     }
 
-    // Merge standalone question number lines like "1." with the immediately following line
-    const mergedLines = [];
-    for (let i = 0; i < allLines.length; i++) {
+    // Deduplicate single radio/checkbox icons vertically centered across wrapped 2-line options
+    for (let i = 0; i < allLines.length - 1; i++) {
       const curr = allLines[i];
       const next = allLines[i + 1];
       if (
-        !curr.hasControl &&
-        STANDALONE_NUMBER_RE.test(curr.text) &&
-        next &&
-        !next.hasControl &&
-        next.pageIndex === curr.pageIndex
+        !curr.fromGlyph &&
+        !next.fromGlyph &&
+        curr.hasControl &&
+        next.hasControl &&
+        curr.pageIndex === next.pageIndex &&
+        curr.controlBox &&
+        next.controlBox
       ) {
-        mergedLines.push({
-          ...curr,
-          text: normalizeInlineSpaces(`${curr.text} ${next.text}`),
-          maxX: Math.max(curr.maxX, next.maxX),
-        });
-        i++;
-      } else {
-        mergedLines.push(curr);
+        const b1 = curr.controlBox;
+        const b2 = next.controlBox;
+        const sameColumn = Math.abs(b1.minX - b2.minX) <= 4;
+        const touchingVertically = b2.minY - b1.maxY <= 3 && b2.minY >= b1.minY;
+        const combinedHeight = b2.maxY - b1.minY + 1;
+        const maxWidth = Math.max(b1.width, b2.width);
+        const isSlicedIcon =
+          b1.height < b1.width * 0.72 || b2.height < b2.width * 0.72;
+
+        if (sameColumn && touchingVertically && isSlicedIcon && combinedHeight <= maxWidth + 10) {
+          curr.isFilled = curr.isFilled || next.isFilled;
+          next.hasControl = false;
+          next.isFilled = false;
+          next.controlBox = null;
+        }
       }
+    }
+
+    // Merge standalone question number badges (with or without dot, e.g. "1." or "1")
+    const mergedLines = [];
+    let expectedBadgeNum = 1;
+    let badgeMarginX = null;
+
+    for (let i = 0; i < allLines.length; i++) {
+      const curr = allLines[i];
+      const next = allLines[i + 1];
+      const badgeMatch = !curr.hasControl ? curr.text.match(STANDALONE_BADGE_RE) : null;
+
+      if (badgeMatch && next && !next.hasControl && !STANDALONE_BADGE_RE.test(next.text)) {
+        const num = Number(badgeMatch[1]);
+        const hasPunct = /[\.\)]/.test(curr.text);
+        const withinBadgeMargin = badgeMarginX === null || Math.abs(curr.x - badgeMarginX) <= 10;
+        const closeAboveNext =
+          next.pageIndex !== curr.pageIndex || (next.y - curr.y > 0 && next.y - curr.y <= 40);
+
+        const isValidPunctBadge = hasPunct && next.pageIndex === curr.pageIndex;
+        const isValidDotlessBadge =
+          !hasPunct && num === expectedBadgeNum && withinBadgeMargin && closeAboveNext;
+
+        if (isValidPunctBadge || isValidDotlessBadge) {
+          if (badgeMarginX === null) badgeMarginX = curr.x;
+          expectedBadgeNum = num + 1;
+          mergedLines.push({
+            ...next,
+            text: normalizeInlineSpaces(`${num}. ${next.text}`),
+            isConfirmedQuestionStart: true,
+            questionNumber: num,
+          });
+          i++;
+          continue;
+        }
+      }
+
+      mergedLines.push(curr);
     }
 
     // Segment into question blocks
@@ -345,6 +413,24 @@
     let lastQuestionNumber = 0;
 
     for (const line of mergedLines) {
+      if (line.isConfirmedQuestionStart) {
+        const mConfirmed = line.text.match(QUESTION_START_RE);
+        const num = line.questionNumber || (mConfirmed ? Number(mConfirmed[1]) : lastQuestionNumber + 1);
+        const rawTitle = mConfirmed ? normalizeInlineSpaces(mConfirmed[2]) : line.text;
+        if (questionMarginX === null || line.x < questionMarginX) {
+          questionMarginX = line.x;
+        }
+        lastQuestionNumber = num;
+        currentBlock = {
+          number: num,
+          titleLine: line,
+          rawTitleText: rawTitle,
+          bodyLines: [],
+        };
+        blocks.push(currentBlock);
+        continue;
+      }
+
       const m = !line.hasControl ? line.text.match(QUESTION_START_RE) : null;
       let isNewQuestion = false;
 
@@ -352,7 +438,7 @@
         const num = Number(m[1]);
         const withinMargin = questionMarginX === null || line.x <= questionMarginX + 18;
         const isSequential = num === lastQuestionNumber + 1;
-        if (withinMargin || isSequential) {
+        if (withinMargin && isSequential) {
           isNewQuestion = true;
           if (questionMarginX === null || line.x < questionMarginX) {
             questionMarginX = line.x;
@@ -419,18 +505,34 @@
 
       // Text / fill-in-the-blank question
       const titleParts = [block.rawTitleText];
-      const remaining = [...block.bodyLines];
+      let remaining = [...block.bodyLines];
 
-      if (
-        !titleEndsWithPrompt(block.rawTitleText) &&
-        remaining.length >= 2 &&
-        !isPlaceholderLine(remaining[0].text) &&
-        remaining[0].pageIndex === block.titleLine.pageIndex &&
-        remaining[0].y - (block.titleLine.y + block.titleLine.height) < 8 &&
-        Math.abs(remaining[0].x - block.titleLine.x) <= 6 &&
-        titleEndsWithPrompt(remaining[0].text)
-      ) {
-        titleParts.push(remaining.shift().text);
+      let ptsIdx = -1;
+      for (let i = 0; i < remaining.length; i++) {
+        if (POINTS_BADGE_RE.test(remaining[i].text)) {
+          ptsIdx = i;
+        }
+      }
+
+      if (ptsIdx >= 0) {
+        for (let i = 0; i <= ptsIdx; i++) {
+          if (!isPlaceholderLine(remaining[i].text)) {
+            titleParts.push(remaining[i].text);
+          }
+        }
+        remaining = remaining.slice(ptsIdx + 1);
+      } else if (!POINTS_BADGE_RE.test(block.rawTitleText)) {
+        if (
+          !titleEndsWithPrompt(block.rawTitleText) &&
+          remaining.length >= 2 &&
+          !isPlaceholderLine(remaining[0].text) &&
+          remaining[0].pageIndex === block.titleLine.pageIndex &&
+          remaining[0].y - (block.titleLine.y + block.titleLine.height) < 8 &&
+          Math.abs(remaining[0].x - block.titleLine.x) <= 6 &&
+          titleEndsWithPrompt(remaining[0].text)
+        ) {
+          titleParts.push(remaining.shift().text);
+        }
       }
 
       const answerLines = remaining

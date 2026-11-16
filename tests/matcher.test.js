@@ -53,6 +53,11 @@ test('stringSimilarity returns 1.0 on exact normalized match and boosts high-rat
     'giao thức truyền tải siêu văn bản (http)'
   );
   assert.ok(simPartial >= 0.85, `Expected >= 0.85, got ${simPartial}`);
+  const simMatrix = stringSimilarity(
+    'giả sử có ma trận nhầm lẫn dưới đây độ chính xác của bộ phân loại là bao nhiêu',
+    'giả sử có ma trận nhầm lẫn dưới đây độ chính xác của bộ phân loại là bao nhiêu buy_computer = yes buy_computer = no total 6954 46 7 412 2588 3 7366 2634 10'
+  );
+  assert.ok(simMatrix >= 0.85, `Expected >= 0.85, got ${simMatrix}`);
   const simDifferent = stringSimilarity('hà nội là thủ đô', 'tokyo là thủ đô nhật bản');
   assert.ok(simDifferent < 0.6, `Expected < 0.6, got ${simDifferent}`);
 });

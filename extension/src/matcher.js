@@ -30,14 +30,15 @@
       ''
     );
 
+    text = text.replace(
+      /\s*\(\s*\d+(?:[.,]\d+)?\s*(?:điểm|point|points|pt|pts)\s*\)/giu,
+      ''
+    );
+
     let prev;
     do {
       prev = text;
       text = text.replace(/\s*\*+\s*$/u, '');
-      text = text.replace(
-        /\s*\(\s*\d+(?:[.,]\d+)?\s*(?:điểm|point|points|pt|pts)\s*\)\s*$/iu,
-        ''
-      );
     } while (text !== prev);
 
     return normalizeText(text);
@@ -91,9 +92,10 @@
     }
 
     if (na.includes(nb) || nb.includes(na)) {
-      const ratio = Math.min(na.length, nb.length) / Math.max(na.length, nb.length);
-      if (ratio >= 0.75) {
-        score = Math.max(score, 0.82 + 0.17 * ratio);
+      const minLen = Math.min(na.length, nb.length);
+      const ratio = minLen / Math.max(na.length, nb.length);
+      if (ratio >= 0.75 || (minLen >= 18 && ratio >= 0.45)) {
+        score = Math.max(score, 0.80 + 0.18 * ratio);
       }
     }
 
