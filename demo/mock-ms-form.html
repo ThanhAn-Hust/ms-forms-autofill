@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sample Knowledge Quiz - Form B (Shuffled)</title>
+  <style>
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f3f2f1;
+      color: #201f1e;
+      margin: 0;
+      padding: 32px 16px;
+    }
+    .form-container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      padding: 28px 32px;
+    }
+    .form-header {
+      border-top: 6px solid #03787c;
+      padding-top: 16px;
+      margin-bottom: 24px;
+    }
+    .form-header h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+    .form-header p {
+      margin: 0;
+      color: #605e5c;
+      font-size: 14px;
+    }
+    [data-automation-id="questionItem"] {
+      padding: 16px 12px;
+      border-bottom: 1px solid #edebe9;
+      margin-bottom: 12px;
+      border-radius: 6px;
+    }
+    [data-automation-id="questionTitle"] {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+    .screen-reader-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    [data-automation-id="choiceItem"] {
+      margin: 8px 0;
+    }
+    [data-automation-id="choiceItem"] label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 4px;
+    }
+    [data-automation-id="choiceItem"] label:hover {
+      background: #f3f2f1;
+    }
+    [data-automation-id="textInput"] {
+      width: 100%;
+      max-width: 520px;
+      padding: 8px 10px;
+      border: 1px solid #8a8886;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .submit-btn {
+      margin-top: 16px;
+      background: #03787c;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Sample Knowledge Quiz (Form B - Shuffled)</h1>
+      <p>Mock Microsoft Forms page with shuffled questions and shuffled choice order.</p>
+    </div>
+
+    <form id="mock-ms-form">
+      <!-- Shuffled #1 -> PDF Q4 -->
+      <div data-automation-id="questionItem" id="form-b-q1">
+        <div data-automation-id="questionTitle">
+          <span data-automation-id="questionOrdinal">1.</span>
+          <span class="screen-reader-only">Question 1 Single choice</span>
+          <span>Which HTTP status code indicates Not Found?</span>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q1" value="500" /><span>3. 500 Internal Server Error</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q1" value="404" /><span>2. 404 Not Found</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q1" value="200" /><span>1. 200 OK</span></label>
+        </div>
+      </div>
+
+      <!-- Shuffled #2 -> PDF Q3 -->
+      <div data-automation-id="questionItem" id="form-b-q2">
+        <div data-automation-id="questionTitle">
+          <span data-automation-id="questionOrdinal">2.</span>
+          <span>What does HTTPS stand for?</span>
+          <span aria-hidden="true">*</span>
+        </div>
+        <input data-automation-id="textInput" type="text" placeholder="Enter your answer" />
+      </div>
+
+      <!-- Shuffled #3 -> PDF Q2 -->
+      <div data-automation-id="questionItem" id="form-b-q3">
+        <div data-automation-id="questionTitle">
+          <span data-automation-id="questionOrdinal">3.</span>
+          <span>Which technologies run natively inside modern web browsers? (2 Points)</span>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="checkbox" value="COBOL" /><span>COBOL</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="checkbox" value="WebAssembly" /><span>WebAssembly</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="checkbox" value="Assembly x86" /><span>Assembly x86</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="checkbox" value="JavaScript" /><span>JavaScript</span></label>
+        </div>
+      </div>
+
+      <!-- Shuffled #4 -> PDF Q5 -->
+      <div data-automation-id="questionItem" id="form-b-q4">
+        <div data-automation-id="questionTitle">
+          <span data-automation-id="questionOrdinal">4.</span>
+          <span>Briefly describe why Chrome Extensions use Manifest V3:</span>
+        </div>
+        <textarea data-automation-id="textInput" rows="2" placeholder="Enter your answer"></textarea>
+      </div>
+
+      <!-- Shuffled #5 -> PDF Q1 -->
+      <div data-automation-id="questionItem" id="form-b-q5">
+        <div data-automation-id="questionTitle">
+          <span data-automation-id="questionOrdinal">5.</span>
+          <span>What is the capital city of Vietnam? * (1 Point)</span>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q5" value="Hue" /><span>Hue</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q5" value="HCMC" /><span>Ho Chi Minh City</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q5" value="Danang" /><span>Danang</span></label>
+        </div>
+        <div data-automation-id="choiceItem">
+          <label><input type="radio" name="b_q5" value="Hanoi" /><span>Hanoi</span></label>
+        </div>
+      </div>
+
+      <button type="button" class="submit-btn" onclick="alert('Demo form - Ready to review!')">Submit</button>
+    </form>
+  </div>
+</body>
+</html>

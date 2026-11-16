@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MS Forms PDF Autofill</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div>
+        <h1>MS Forms Autofill</h1>
+        <p class="subtitle">Đọc đáp án từ PDF Save my response (100% nội bộ)</p>
+      </div>
+      <span id="tab-badge" class="pill pill-muted">Đang kiểm tra...</span>
+    </header>
+
+    <section id="drop-zone" class="drop-zone" tabindex="0">
+      <input id="pdf-input" type="file" accept="application/pdf,.pdf" hidden />
+      <div class="drop-icon">📄</div>
+      <div class="drop-text">
+        <strong id="file-label">Chọn hoặc kéo thả file PDF A vào đây</strong>
+        <span id="file-meta">Hỗ trợ trắc nghiệm 1/nhiều lựa chọn & điền chữ</span>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button id="btn-fill" type="button" class="btn btn-primary" disabled>
+        ⚡ Điền ngay vào Form đang mở
+      </button>
+      <button id="btn-clear" type="button" class="btn btn-secondary" title="Xóa dữ liệu đã lưu" disabled>
+        🗑 Xóa
+      </button>
+    </section>
+
+    <label class="toggle-bar">
+      <input id="chk-autofill-nav" type="checkbox" />
+      <span>Tự động điền khi chuyển trang (Next / Tiếp theo)</span>
+    </label>
+
+    <div id="status-banner" class="status-banner" hidden></div>
+
+    <section class="toolbar">
+      <input
+        id="search-input"
+        type="search"
+        class="search-input"
+        placeholder="🔍 Tìm câu hỏi hoặc đáp án..."
+      />
+      <button id="btn-add-question" type="button" class="btn btn-ghost">
+        + Thêm câu
+      </button>
+    </section>
+
+    <section id="manual-form" class="manual-form" hidden>
+      <input id="manual-title" type="text" placeholder="Nội dung câu hỏi..." />
+      <div class="manual-row">
+        <select id="manual-type">
+          <option value="choice">Trắc nghiệm</option>
+          <option value="text">Điền chữ</option>
+        </select>
+        <input id="manual-answer" type="text" placeholder="Đáp án đúng (cách nhau bằng dấu | nếu nhiều)..." />
+      </div>
+      <div class="manual-actions">
+        <button id="btn-manual-save" type="button" class="btn btn-primary btn-sm">Lưu câu</button>
+        <button id="btn-manual-cancel" type="button" class="btn btn-secondary btn-sm">Hủy</button>
+      </div>
+    </section>
+
+    <main id="question-list" class="question-list">
+      <div class="empty-state">
+        Chưa có dữ liệu. Hãy nạp file PDF A được in từ Microsoft Forms (<em>Save my response</em>).
+      </div>
+    </main>
+  </div>
+
+  <script src="matcher.js"></script>
+  <script src="pdf-layout-parser.js"></script>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

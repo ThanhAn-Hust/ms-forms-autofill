@@ -1,0 +1,16 @@
+{
+  "name": "ms-forms-autofill",
+  "version": "1.0.0",
+  "description": "Chrome/Edge Extension to autofill Microsoft Forms from a printed Save-my-response PDF locally in browser.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "generate-demo-pdf": "node scripts/generate-sample-pdf.mjs"
+  },
+  "dependencies": {
+    "pdfjs-dist": "4.10.38"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1"
+  }
+}
